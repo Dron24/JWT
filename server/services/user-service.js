@@ -5,14 +5,13 @@ const mailService = require('./mail-service');
 const tokenService = require('./token-service');
 const UserDto = require('./../dtos/user-dto');
 const sequelize = require('./../db');
-const ApiError = ('./../exceptions/api-error');
-
+const ApiError = require('./../exceptions/api-error')
 
 class UserService {
   async registration(email, password) {
     const candidate = await UserModel.findOne({ where: { email } });
     if (candidate) {
-      throw new Error(`E-mail: "${email}" уже зарегистрирован!`);
+      throw ApiError.BadRequest(`E-mail: "${email}" уже зарегистрирован!`);
     }
     const hashPassword = await argon2.hash(password);
     const activationLink = uuidv4();
@@ -31,10 +30,30 @@ class UserService {
   async activate (activationLink) {
     const user = await UserModel.findOne({activationLink})
     if(!user){
-      throw new Error('Некорректная ссылка активации')
+      throw ApiError.BadRequest('Некорректная ссылка активации')
     }
     user.isActivated = true;
     await user.save();
+  }
+
+  async login (email, password) {
+    const user = await UserModel.findOne({email})
+    if(!user){
+      throw ApiError.BadRequest('Пользователь с таким email не зарегистрирован')
+    }
+    const isPassEquals = await argon2.verify(user.password, password);
+    if (!isPassEquals) {
+      throw ApiError.BadRequest('Неверный пароль')
+    }
+    const userDto = new UserDto(user);
+    const token = tokenService.generateTokens({...userDto});
+    await tokenService.saveToken(userDto.id, tokens.refreshToken);
+    return { ...tokens, user: userDto }
+  }
+
+  async logout (refreshToken) {
+    const token = await tokenService.removeToken(refreshToken);
+    return token;
   }
 }
 
