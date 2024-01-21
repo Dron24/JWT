@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('./sequelize');
-const User = require('./user-model');
+const sequelize = require('../db'); // Используем относительный путь для sequelize
+const User = require('./user-model'); // Используем относительный путь для user-model
 
 const Token = sequelize.define('Token', {
   refreshToken: {

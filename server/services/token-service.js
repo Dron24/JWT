@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { Token } = require('./../models'); // Assuming you have a Token model defined
+const { Token } = require('./../models/token-model'); // Assuming you have a Token model defined
 const sequelize = require('./../db');
 
 class TokenService {
@@ -13,7 +13,7 @@ class TokenService {
   }
 
   async saveToken(userId, refreshToken) {
-    let tokenData = await Token.findOne({ where: { user: userId } });
+    let tokenData = await Token.findOne({ where: { UserId: userId } });
     if (tokenData) {
       tokenData.refreshToken = refreshToken;
       await tokenData.save();

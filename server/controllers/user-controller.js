@@ -1,7 +1,13 @@
+const userService = require('./../services/user-service');
+const tokenService = require('./../services/token-service');
+
 class UserController {
   async register(req, res, next) {
     try {
-      
+      const { email, password } = req.body;
+      const userData = await userService.registration(email, password);
+      res.cookie('refreshToken', userData.refreshToken, { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true });
+      return res.json(userData);
     } catch (e) {
       console.log(e);
     }
@@ -9,41 +15,53 @@ class UserController {
 
   async login(req, res, next) {
     try {
-      // Implement login logic
+      const { email, password } = req.body;
+      const userData = await userService.login(email, password);
+      res.cookie('refreshToken', userData.refreshToken, { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true });
+      return res.json(userData);
     } catch (e) {
-      // Handle error
+      console.log(e);
     }
   }
 
   async logout(req, res, next) {
     try {
-      // Implement logout logic
+      const { refreshToken } = req.cookies;
+      const token = await tokenService.removeToken(refreshToken);
+      res.clearCookie('refreshToken');
+      return res.json(token);
     } catch (e) {
-      // Handle error
+      console.log(e);
     }
   }
 
   async activate(req, res, next) {
     try {
-      // Implement account activation logic
+      const activationLink = req.params.link;
+      await userService.activate(activationLink);
+      return res.redirect(process.env.CLIENT_URL);
     } catch (e) {
-      // Handle error
+      console.log(e);
     }
   }
 
   async refresh(req, res, next) {
     try {
-      // Implement refresh token logic
+      const { refreshToken } = req.cookies;
+      const userData = await userService.refresh(refreshToken);
+      res.cookie('refreshToken', userData.refreshToken, { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true });
+      return res.json(userData);
     } catch (e) {
-      // Handle error
+      console.log(e);
     }
   }
 
   async getUsers(req, res, next) {
     try {
-
+      const users = await userService.getAllUsers();
+      return res.json(users);
     } catch (e) {
-      // Handle error
+      console.log(e);
     }
   }
 }
